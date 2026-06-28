@@ -1,0 +1,41 @@
+name: Deploy Atunbi to ECS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/atunbi-skeleton:latest
+          platforms: linux/amd64
+
+      - name: Deploy to Alibaba ECS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.ECS_HOST }}
+          username: root
+          password: ${{ secrets.ECS_PASSWORD }}
+          script: |
+            docker stop atunbi-live || true
+            docker rm atunbi-live || true
+            docker pull ${{ secrets.DOCKER_USERNAME }}/atunbi-skeleton:latest
+            docker run -d -p 80:8000 --name atunbi-live ${{ secrets.DOCKER_USERNAME }}/atunbi-skeleton:latest
+            docker image prune -f

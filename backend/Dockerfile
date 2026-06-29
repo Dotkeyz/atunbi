@@ -1,5 +1,9 @@
 FROM python:3.11-slim
 
+# The Best Practices: Lean image + Real-time logging
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
 COPY requirements.txt .

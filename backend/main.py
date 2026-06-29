@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from contextlib import asynccontextmanager
 from sqlmodel import select
 import datetime
+import traceback
 
 from database import init_db, async_session
 from models import WorkingMemory, SemanticMemory
@@ -11,8 +12,12 @@ from qwen_service import get_embedding, score_importance
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("🧠 Booting up Atunbi... Initializing Cognitive Schema...")
-    await init_db()
-    print("✅ Database tables created. Atunbi is awake.")
+    try:
+        await init_db()
+        print("✅ Database tables created. Atunbi is awake.")
+    except Exception as e:
+        print("⚠️ WARNING: Could not connect to database. Running in degraded mode.")
+        print(traceback.format_exc())
     yield
 
 app = FastAPI(title="Atunbi Cognitive Architecture", lifespan=lifespan)
@@ -28,7 +33,6 @@ async def chat_endpoint(request: ChatRequest):
         importance = await score_importance(request.message)
 
         async with async_session() as session:
-            # 1. Save the new thought
             new_memory = WorkingMemory(
                 user_id=request.user_id,
                 message=request.message,
@@ -39,7 +43,6 @@ async def chat_endpoint(request: ChatRequest):
             session.add(new_memory)
             await session.commit()
             
-            # 2. Semantic Search + Calculate Exact Distance
             statement = (
                 select(WorkingMemory, WorkingMemory.embedding.cosine_distance(query_vector).label("distance"))
                 .where(WorkingMemory.user_id == request.user_id)
@@ -53,12 +56,9 @@ async def chat_endpoint(request: ChatRequest):
             for row in rows:
                 mem = row[0]
                 distance = row[1]
-                
-                # 3. THE BYSTANDER FIX: Only reinforce if mathematically similar (< 0.5)
                 if distance < 0.5:
                     mem.access_count += 1
                     session.add(mem)
-                    
                 retrieved_context.append(f"{mem.message} (Imp: {mem.importance_score:.1f}, Acc: {mem.access_count}, Dist: {distance:.2f})")
             
             await session.commit()
@@ -74,10 +74,6 @@ async def chat_endpoint(request: ChatRequest):
 
 @app.post("/dream")
 async def dream_phase():
-    '''
-    Generational Garbage Collection.
-    Promotes critical memories, prunes forgotten trivia, respects Age.
-    '''
     PRUNE_AGE_THRESHOLD = datetime.timedelta(minutes=5) 
     now = datetime.datetime.utcnow()
     
@@ -92,32 +88,19 @@ async def dream_phase():
         
         for mem in memories:
             age = now - mem.timestamp
-            
-            # Promotion Rule
             if mem.importance_score >= 0.8 or mem.access_count >= 5:
-                long_term = SemanticMemory(
-                    user_id=mem.user_id,
-                    fact=mem.message,
-                    embedding=mem.embedding
-                )
+                long_term = SemanticMemory(user_id=mem.user_id, fact=mem.message, embedding=mem.embedding)
                 session.add(long_term)
                 await session.delete(mem)
                 promoted += 1
-                
-            # Pruning Rule (Must be old enough!)
             elif mem.importance_score < 0.3 and mem.access_count < 2 and age > PRUNE_AGE_THRESHOLD:
                 await session.delete(mem)
                 pruned += 1
-                
             else:
                 retained += 1
-                
         await session.commit()
         
-    return {
-        "status": "dream_complete",
-        "summary": f"Promoted: {promoted}, Pruned: {pruned}, Retained: {retained}"
-    }
+    return {"status": "dream_complete", "summary": f"Promoted: {promoted}, Pruned: {pruned}, Retained: {retained}"}
 
 @app.get("/health")
 async def health_check():

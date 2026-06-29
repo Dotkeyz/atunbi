@@ -1,0 +1,15 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: atunbi_postgres
+    environment:
+      POSTGRES_USER: atunbi
+      POSTGRES_PASSWORD: atunbi_secret
+      POSTGRES_DB: atunbi_memory
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

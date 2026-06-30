@@ -37,5 +37,16 @@ jobs:
             docker stop atunbi-live || true
             docker rm atunbi-live || true
             docker pull ${{ secrets.DOCKER_USERNAME }}/atunbi-skeleton:latest
-            docker run -d -p 80:8000 --name atunbi-live ${{ secrets.DOCKER_USERNAME }}/atunbi-skeleton:latest
+            
+            # INJECTING THE CLOUD BRAIN & SECRETS AT RUNTIME
+            docker run -d -p 80:8000 \
+              -e QWEN_API_KEY=${{ secrets.QWEN_API_KEY }} \
+              -e QWEN_BASE_URL=https://dashscope-intl.aliyuncs.com/compatible-mode/v1 \
+              -e DB_HOST=${{ secrets.DB_HOST }} \
+              -e DB_USER=${{ secrets.DB_USER }} \
+              -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+              -e DB_NAME=${{ secrets.DB_NAME }} \
+              -e DB_PORT=${{ secrets.DB_PORT }} \
+              --name atunbi-live ${{ secrets.DOCKER_USERNAME }}/atunbi-skeleton:latest
+            
             docker image prune -f

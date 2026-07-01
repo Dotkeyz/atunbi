@@ -3,7 +3,7 @@ from sqlmodel import SQLModel, select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import text
-from models.models import SystemConfig
+from models import SystemConfig
 
 DB_USER = os.getenv("DB_USER", "atunbi")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "atunbi_secret")
@@ -19,6 +19,10 @@ async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False
 async def init_db():
     async with engine.begin() as conn:
         await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+        
+        # HACKATHON RESET: Drop all tables to apply new schema (User, conversation_id, etc.)
+        await conn.run_sync(SQLModel.metadata.drop_all)
+        
         await conn.run_sync(SQLModel.metadata.create_all)
     
     async with async_session() as session:

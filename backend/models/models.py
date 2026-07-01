@@ -24,6 +24,7 @@ class WorkingMemory(SQLModel, table=True):
     conversation_id: str = Field(index=True)
     embedding: List[float] = Field(sa_column=Column(Vector(1536)))
     importance_score: float = Field(default=0.5)
+    emotional_valence: float = Field(default=0.0)
     access_count: int = Field(default=0)
     timestamp: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
 
@@ -33,6 +34,7 @@ class EpisodicMemory(SQLModel, table=True):
     summary: str
     embedding: List[float] = Field(sa_column=Column(Vector(1536)))
     importance_score: float = Field(default=0.5)
+    emotional_valence: float = Field(default=0.0)
     timestamp: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
 
 class SemanticMemory(SQLModel, table=True):

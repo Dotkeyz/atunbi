@@ -8,6 +8,12 @@ openai
 python-dotenv
 greenlet
 pyjwt
+networkx
 passlib==1.7.4
 bcrypt==3.2.2
 python-multipart
+aiohttp
+alibabacloud_eventbridge
+oss2
+dashscope
+PyPDF2>=3.0

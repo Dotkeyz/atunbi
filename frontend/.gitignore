@@ -1,0 +1,29 @@
+# ==========================================
+# Python (Backend)
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+venv/
+.venv/
+env/
+
+# ==========================================
+# Next.js / Node (Frontend)
+# ==========================================
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ==========================================
+# Mac / IDE / Misc
+# ==========================================
+.DS_Store
+*.pem
+.idea/
+.vscode/

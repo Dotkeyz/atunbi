@@ -1,0 +1,139 @@
+# Alibaba Cloud API Gateway — Atunbi Cognitive Architecture
+# Routes all client traffic through managed gateway with auth passthrough,
+# rate limiting, and CORS handled at the edge.
+#
+# Deploy via: aliyun CLI or ROS (Resource Orchestration Service)
+
+apiVersion: alibaba-cloud/v1
+kind: ApiGateway
+
+service:
+  name: atunbi-cognitive-api
+  protocol: HTTP
+  backend:
+    type: ECS # Points to our FastAPI server (ECS or ACK)
+    address: ${BACKEND_HOST}:8000
+    weight: 100
+
+routes:
+  # ── Auth (unauthenticated) ──
+  - path: /auth/login
+    methods: [POST]
+    auth: false
+    rateLimit: 10/m
+    description: User login — returns JWT
+
+  - path: /auth/register
+    methods: [POST]
+    auth: false
+    rateLimit: 5/m
+    description: User registration
+
+  # ── Chat (authenticated, streaming) ──
+  - path: /api/v1/chat/stream
+    methods: [POST]
+    auth: JWT
+    rateLimit: 30/m
+    timeout: 60000 # 60s for streaming responses
+    description: SSE chat stream with Qwen LLM
+
+  # ── Stats (authenticated) ──
+  - path: /api/v1/stats
+    methods: [GET]
+    auth: JWT
+    rateLimit: 60/m
+    description: Memory tier snapshot
+
+  - path: /api/v1/stats/stream
+    methods: [GET]
+    auth: JWT
+    rateLimit: 10/m
+    timeout: 300000 # Long-lived SSE connection
+    description: Real-time stats SSE stream — replaces polling
+
+  # ── Config (authenticated) ──
+  - path: /api/v1/config
+    methods: [GET, PUT]
+    auth: JWT
+    rateLimit: 30/m
+    description: Read/write cognitive configuration
+
+  # ── Dream Phase (authenticated) ──
+  - path: /api/v1/dream
+    methods: [POST]
+    auth: JWT
+    rateLimit: 5/m
+    description: Manual dream trigger — single user
+
+  # ── Dream Phase (internal, API key) ──
+  - path: /api/v1/internal/dream
+    methods: [POST]
+    auth: apiKey # Validated at gateway — no JWT needed
+    rateLimit: 10/h
+    description: Scheduled dream trigger — Function Compute → all users
+
+  # ── History (authenticated) ──
+  - path: /api/v1/history
+    methods: [GET, DELETE]
+    auth: JWT
+    rateLimit: 30/m
+    description: Conversation history CRUD
+
+  - path: /api/v1/history/*
+    methods: [GET, DELETE]
+    auth: JWT
+    rateLimit: 30/m
+
+  # ── Ingestion (authenticated, large payloads) ──
+  - path: /api/v1/ingest
+    methods: [POST]
+    auth: JWT
+    rateLimit: 20/m
+    maxBodySize: 26214400 # 25 MB for audio files
+    description: File ingestion via OSS + DashScope ASR
+
+  # ── Chat (authenticated, non-streaming fallback) ──
+  - path: /api/v1/chat
+    methods: [POST]
+    auth: JWT
+    rateLimit: 30/m
+    description: Non-streaming chat with Qwen LLM
+
+  # ── MCP (Model Context Protocol) ──
+  - path: /mcp/sse
+    methods: [GET]
+    auth: false
+    timeout: 300000
+    description: MCP SSE connection — no auth (tools enforce user context)
+
+  - path: /mcp/messages
+    methods: [POST]
+    auth: false
+    rateLimit: 60/m
+    description: MCP message endpoint
+
+cors:
+  origins:
+    - http://localhost:3000
+    - ${FRONTEND_URL}
+  methods: [GET, POST, PUT, DELETE, OPTIONS]
+  headers: [Authorization, Content-Type]
+  maxAge: 86400
+
+plugins:
+  - name: jwt-auth
+    type: system
+    config:
+      secretRef: ${JWT_SECRET_ARN} # Pulls from Secrets Manager
+      algorithm: HS256
+
+  - name: rate-limit
+    type: system
+    config:
+      defaultLimit: 60/m
+
+  - name: request-logging
+    type: custom
+    config:
+      logBody: false # Don't log chat messages
+      destination: SLS # Alibaba Cloud Log Service

@@ -1,22 +1,47 @@
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
+import logging
 from database import init_db
-from api.routes import auth, chat, dream, config
+from api.routes import auth, history, chat, dream, config, stats, ingestion, tools
+from mcp_server.sse_server import router as mcp_router
+
+# Structured logging — INFO visible in terminal, DEBUG hidden
+logging.basicConfig(level=logging.INFO, format="%(name)s: %(message)s")
+logger = logging.getLogger("atunbi")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("🧠 Booting up Atunbi... Initializing Cognitive Schema...")
+    logger.info("Atunbi starting up...")
     await init_db()
-    print("✅ Database tables created. Atunbi is awake.")
+    logger.info("Ready.")
     yield
 
-app = FastAPI(title="Atunbi Cognitive Architecture", lifespan=lifespan)
+app = FastAPI(title="Atunbi", docs_url="/api/docs", lifespan=lifespan)
 
-app.include_router(auth.router, prefix="/auth")
-app.include_router(chat.router, prefix="/api/v1")
-app.include_router(dream.router, prefix="/api/v1")
-app.include_router(config.router, prefix="/api/v1")
 
 @app.get("/health")
 async def health_check():
-    return {"status": "alive", "service": "atunbi-skeleton", "brain": "connected"}
+    return {"status": "ok"}
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, restrict this to your frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+app.include_router(auth.router, prefix="/auth")
+app.include_router(history.router, prefix="/api/v1")
+app.include_router(chat.router, prefix="/api/v1")
+app.include_router(dream.router, prefix="/api/v1")
+app.include_router(config.router, prefix="/api/v1")
+app.include_router(stats.router, prefix="/api/v1")
+app.include_router(ingestion.router, prefix="/api/v1")
+app.include_router(tools.router, prefix="/api/v1")
+app.include_router(mcp_router)
+
+@app.get("/health")
+async def health_check():
+    return {"status": "alive", "service": "atunbi", "brain": "connected"}

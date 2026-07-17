@@ -14,3 +14,10 @@ out/
 .idea/
 .DS_Store
 Thumbs.db
+
+notes
+docs
+TESTS
+
+# Build artifacts
+infra/dream-trigger/*.zip

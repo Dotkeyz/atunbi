@@ -6,7 +6,6 @@ from core.security import decode_access_token
 from models import User
 from sqlmodel import select
 
-# The Senior Move: HTTPBearer instead of OAuth2PasswordBearer
 security = HTTPBearer()
 
 async def get_db():

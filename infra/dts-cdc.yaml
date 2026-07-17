@@ -1,0 +1,69 @@
+# Alibaba Cloud DTS (Data Transmission Service) — CDC Pipeline for Atunbi
+#
+# DTS watches ApsaraDB PostgreSQL WAL (Write-Ahead Log) and captures every
+# INSERT / UPDATE / DELETE at the database level. Zero application code.
+#
+# Flow:
+#   ApsaraDB WAL → DTS → EventBridge → { Function Compute, ApsaraMQ, SLS }
+#
+# Deploy via:  aliyun CLI  or  ROS (Resource Orchestration Service)
+
+apiVersion: alibaba-cloud/v1
+kind: DTS
+
+subscription:
+  name: atunbi-cdc-subscription
+  source:
+    type: PostgreSQL
+    instanceId: pgm-f2zd64555rvp6bps
+    region: eu-west-1
+    database: atunbi
+    tables:
+      - public.workingmemory # Every new memory stored
+      - public.episodicmemory # Every episode created
+      - public.semanticmemory # Every fact extracted
+    # DTS auto-creates a replication slot — no app changes needed
+
+  target:
+    type: EventBridge
+    busName: atunbi-memory-bus
+    region: eu-west-1
+
+# ── EventBridge Rules (what happens when DTS pushes an event) ──
+eventBridge:
+  busName: atunbi-memory-bus
+
+  rules:
+    # Cron-based dream phase scheduler — fires every 1 hour
+    # Triggered by EventBridge Scheduler (not DTS — dream is time-based, not mutation-based)
+    - name: dream-phase-scheduler
+      type: cron
+      schedule: "rate(1 hour)"
+      targets:
+        - type: FunctionCompute
+          functionName: atunbi-dream-trigger
+          description: "Calls POST /api/v1/internal/dream — runs consolidation for all due users"
+
+    # DTS CDC rules for external consumers:
+    - name: episode-created
+      filterPattern: '{"source":["dts.postgresql.public.episodicmemory"],"type":["INSERT"]}'
+      targets:
+        - type: ApsaraMQ
+          topic: atunbi-episodes
+          description: "Queue for async episode processing"
+
+    # All memory mutations → audit log
+    - name: memory-audit-trail
+      filterPattern: '{"source":[{"prefix":"dts.postgresql.public."}]}'
+      targets:
+        - type: SLS
+          project: atunbi-logs
+          logstore: memory-audit
+          description: "Full CDC audit trail for compliance"
+
+# ── What DTS gives us that app-level events cannot ──
+# 1. Catches raw SQL changes (not just API calls)
+# 2. Zero latency — WAL-level capture
+# 3. Exactly-once delivery semantics
+# 4. No application code dependency
+# 5. Survives application restarts/deployments

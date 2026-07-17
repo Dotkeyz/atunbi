@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlmodel.ext.asyncio.session import AsyncSession
 from api.dependencies import get_db, get_current_user
 from models.models import User
-from schemas.schemas import ConfigUpdate
+from schemas.config import ConfigUpdate
 from services import config_service
 
 router = APIRouter(tags=["Config"])

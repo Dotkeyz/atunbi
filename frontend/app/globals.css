@@ -1,0 +1,827 @@
+@import "tailwindcss";
+
+/* ============================================
+   DNA DESIGN TOKENS — Warm Studio + Dark Mode
+   ============================================ */
+
+:root {
+  --dna-bg: #faf9f7;
+  --dna-surface: #fff;
+  --dna-surface2: #f1f5f9;
+  --dna-border: #e2dfd9;
+  --dna-text: #1a1a1a;
+  --dna-text2: #3d3d3d;
+  --dna-muted: #7a7a7a;
+  --dna-accent: #5046e5;
+  --dna-accent-light: #ededfc;
+  --dna-accent-border: #c7c4f7;
+  --dna-shadow-sm: 0 1px 3px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.06);
+  --dna-shadow-md: 0 4px 12px rgba(0,0,0,.05), 0 2px 4px rgba(0,0,0,.04);
+  --dna-shadow-lg: 0 8px 24px rgba(0,0,0,.07), 0 4px 8px rgba(0,0,0,.04);
+  --dna-glass: rgba(255,255,255,.7);
+  --dna-glass-border: rgba(226,223,217,.5);
+}
+
+[data-theme="dark"] {
+  --dna-bg: #1a1a2e;
+  --dna-surface: #16213e;
+  --dna-surface2: #0f3460;
+  --dna-border: #2a2a4a;
+  --dna-text: #e2e8f0;
+  --dna-text2: #cbd5e1;
+  --dna-muted: #94a3b8;
+  --dna-accent: #818cf8;
+  --dna-accent-light: rgba(129,140,248,.12);
+  --dna-accent-border: rgba(129,140,248,.25);
+  --dna-shadow-sm: 0 1px 3px rgba(0,0,0,.2);
+  --dna-shadow-md: 0 4px 12px rgba(0,0,0,.3);
+  --dna-shadow-lg: 0 8px 24px rgba(0,0,0,.4);
+  --dna-glass: rgba(22,33,62,.7);
+  --dna-glass-border: rgba(42,42,74,.5);
+}
+
+/* Warm studio base */
+body {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: var(--dna-bg);
+  color: var(--dna-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background .3s ease, color .3s ease;
+}
+
+::selection {
+  background: var(--dna-accent-light);
+  color: var(--dna-accent);
+}
+
+/* ========== PREMIUM DESIGN BLOCKS ========== */
+/* Scrollbar — DNA style */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 4px; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,.25); }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.25); }
+
+/* ============================================
+   ATUNBI CHAT RESPONSE — Premium DNA Components
+   ============================================ */
+
+.atunbi-response {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #3d3d3d;
+  animation: dna-fade-in .8s cubic-bezier(.4,0,.2,1);
+}
+
+@keyframes dna-fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.atunbi-response .chat-response {
+  padding: 0;
+}
+
+/* ── Response source indicators ── */
+.response-memory {
+  border-left: 3px solid var(--dna-accent) !important;
+}
+.response-notfound {
+  border-left: 3px solid #ea580c !important;
+}
+
+/* — Section Titles — */
+.atunbi-response .section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 0.5px solid transparent;
+  border-image: linear-gradient(to right, #e2dfd9 0%, transparent 45%) 1;
+  letter-spacing: -0.01em;
+}
+
+.atunbi-response .section-title:first-child {
+  margin-top: 0;
+}
+
+/* — Paragraphs — */
+.atunbi-response p {
+  margin-bottom: 1rem;
+  line-height: 1.7;
+  color: #3d3d3d;
+}
+
+.atunbi-response strong {
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.atunbi-response code {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  background: #f1f5f9;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  color: #5046e5;
+}
+
+/* — Headings — */
+.atunbi-response h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 1.75rem 0 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 0.5px solid #e2dfd9;
+}
+
+/* — Horizontal rule — section break — */
+.atunbi-response hr {
+  border: none;
+  border-top: 0.5px solid #e2dfd9;
+  margin: 1.5rem 0;
+}
+
+/* — Lists — */
+.atunbi-response ul, .atunbi-response ol {
+  margin: 0.75rem 0;
+  padding-left: 1.25rem;
+}
+
+.atunbi-response li {
+  margin-bottom: 0.5rem;
+  line-height: 1.7;
+  color: #3d3d3d;
+}
+
+.atunbi-response li strong {
+  color: #1a1a1a;
+}
+
+/* — Inline emphasis — */
+.atunbi-response em {
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* — Concept Cards — */
+.atunbi-response .concept-card {
+  background: rgba(255,255,255,.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 0.5px solid #e2dfd9;
+  border-left: 3px solid #5046e5;
+  border-radius: 16px;
+  padding: 2rem;
+  margin: 1.25rem 0;
+  box-shadow: 0 2px 12px rgba(0,0,0,.04);
+}
+
+.atunbi-response .concept-card.red  { border-left-color: #dc2626; }
+.atunbi-response .concept-card.green  { border-left-color: #16a34a; }
+.atunbi-response .concept-card.purple { border-left-color: #7c3aed; }
+.atunbi-response .concept-card.amber  { border-left-color: #ea580c; }
+
+.atunbi-response .concept-card-title {
+  margin-bottom: 0.5rem;
+}
+
+.atunbi-response .concept-card-title .badge {
+  display: block;
+  width: fit-content;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #5046e5;
+  margin-bottom: 0.6rem;
+}
+
+.atunbi-response .concept-card.red .badge    { color: #dc2626; }
+.atunbi-response .concept-card.green .badge  { color: #16a34a; }
+.atunbi-response .concept-card.purple .badge { color: #7c3aed; }
+.atunbi-response .concept-card.amber .badge  { color: #ea580c; }
+
+.atunbi-response .concept-card-title span:not(.badge) {
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  color: #1a1a1a;
+}
+
+.atunbi-response .concept-card-body {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #3d3d3d;
+  margin-bottom: 0.5rem;
+}
+
+.atunbi-response .concept-card-body p {
+  margin-bottom: 0.5rem;
+}
+
+.atunbi-response .concept-card-impact {
+  background: rgba(80,70,229,.04);
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.atunbi-response .concept-card.red .concept-card-impact    { background: rgba(220,38,38,.04); }
+.atunbi-response .concept-card.green .concept-card-impact  { background: rgba(22,163,74,.04); }
+.atunbi-response .concept-card.purple .concept-card-impact { background: rgba(124,58,237,.04); }
+.atunbi-response .concept-card.amber .concept-card-impact  { background: rgba(234,88,12,.04); }
+
+.atunbi-response .concept-card-impact strong {
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+/* — Metric Chips — */
+.atunbi-response .metric-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+.atunbi-response .metric-chip {
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  background: rgba(80,70,229,.05);
+  padding: 3px 10px;
+  border-radius: 6px;
+  color: #5046e5;
+}
+
+/* — Mental Model — */
+.atunbi-response .mental-model {
+  background: linear-gradient(135deg, #ecfeff, #f0faff);
+  border: 1px solid #a5f3fc;
+  border-left: 3px solid #0891b2;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1.25rem 0;
+}
+
+.atunbi-response .mental-model-label {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #0891b2;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.atunbi-response .mental-model h3 {
+  font-size: 17px;
+  font-weight: 500;
+  color: #1a1a1a;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.75rem;
+}
+
+.atunbi-response .mental-model p {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #3d3d3d;
+  margin-bottom: 0.5rem;
+}
+
+.atunbi-response .mm-step {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #0891b2;
+  display: block;
+  background: rgba(8,145,178,.08);
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-bottom: 0.35rem;
+  width: fit-content;
+}
+
+/* — Key Insight — */
+.atunbi-response .key-insight {
+  background: linear-gradient(135deg, #ededfc, #f0f4ff);
+  border: 1px solid #c7c4f7;
+  border-left: 3px solid #5046e5;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin: 1.25rem 0;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* — Danger Block — */
+.atunbi-response .danger {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-left: 3px solid #dc2626;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin: 1.25rem 0;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.atunbi-response .danger-title {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #dc2626;
+  margin-bottom: 0.35rem;
+}
+
+/* — Jargon Block — */
+.atunbi-response .jb {
+  background: #fff;
+  border: 1px solid #e2dfd9;
+  border-left: 3px solid #2563eb;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin: 1.25rem 0;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.atunbi-response .jb-label {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #2563eb;
+  margin-bottom: 0.35rem;
+}
+
+/* — Code Block — DNA syntax highlighting — */
+.atunbi-response .cblock {
+  background: #1e1e2e;
+  border-radius: 12px;
+  margin: 1.25rem 0;
+  overflow: hidden;
+  border: 1px solid #313244;
+  border-left: 3px solid #89b4fa;
+}
+
+.atunbi-response .cblock-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: #181825;
+  border-bottom: 1px solid #313244;
+}
+
+.atunbi-response .cblock-lang {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #a6adc8;
+}
+
+.atunbi-response .cblock pre,
+.atunbi-response .cblock code {
+  padding: 1.5rem;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #cdd6f4;
+  margin: 0;
+  background: transparent;
+  display: block;
+  border-radius: 0;
+}
+
+.atunbi-response .kw  { color: #cba6f7; }
+.atunbi-response .type { color: #89dceb; }
+.atunbi-response .fn  { color: #89b4fa; }
+.atunbi-response .str { color: #a6e3a1; }
+.atunbi-response .num { color: #fab387; }
+.atunbi-response .cmt { color: #6c7086; font-style: italic; }
+
+/* — Reveal Answer — */
+.atunbi-response .reveal-answer {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-left: 3px solid #16a34a;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin: 1.25rem 0;
+}
+
+.atunbi-response .reveal-answer-label {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #16a34a;
+  margin-bottom: 0.35rem;
+}
+
+.atunbi-response .reveal-answer p {
+  font-size: 14px;
+  line-height: 1.7;
+  margin-bottom: 0;
+}
+
+/* — Bullet List — */
+.atunbi-response .bullet-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 1rem 0;
+}
+
+.atunbi-response .bullet-list li {
+  position: relative;
+  padding-left: 1.5rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.7;
+  color: #3d3d3d;
+}
+
+.atunbi-response .bullet-list li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #5046e5;
+  font-weight: bold;
+}
+
+.atunbi-response .bullet-list li strong {
+  color: #1a1a1a;
+}
+
+/* — Summary Box — */
+.atunbi-response .summary-box {
+  background: linear-gradient(135deg, #ededfc, rgba(124,58,237,.06));
+  border: 1px solid #c7c4f7;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.atunbi-response .summary-box p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #3d3d3d;
+}
+
+.atunbi-response em {
+  color: #6b7280;
+}
+
+.atunbi-response a {
+  color: #7c3aed;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.atunbi-response a:hover {
+  color: #5b21b6;
+}
+
+/* ============================================
+   DNA THEME TOGGLE ICONS
+   ============================================ */
+
+/* Light mode: show sun */
+.theme-icon-sun { display: block; }
+.theme-icon-moon { display: none; }
+
+/* Dark mode: show moon */
+[data-theme="dark"] .theme-icon-sun { display: none; }
+[data-theme="dark"] .theme-icon-moon { display: block; }
+
+/* ============================================
+   DNA DARK MODE — Full Application
+   ============================================ */
+
+[data-theme="dark"] body {
+  background: #1a1a2e !important;
+}
+
+/* Header, sidebar, panels — frosted dark glass */
+[data-theme="dark"] header {
+  background: rgba(22,33,62,.85) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-color: rgba(42,42,74,.5) !important;
+}
+
+/* Inputs — visible border in dark mode */
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="password"] {
+  background: rgba(15,20,40,.8) !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(129,140,248,.35) !important;
+  box-shadow: 0 0 0 1px rgba(129,140,248,.06) !important;
+}
+
+[data-theme="dark"] input:focus {
+  border-color: rgba(129,140,248,.6) !important;
+  box-shadow: 0 0 0 3px rgba(129,140,248,.12) !important;
+}
+
+[data-theme="dark"] input::placeholder { color: #64748b !important; }
+
+/* Text colors — override Tailwind grays */
+[data-theme="dark"] .text-gray-900 { color: #e2e8f0 !important; }
+[data-theme="dark"] .text-gray-800 { color: #e2e8f0 !important; }
+[data-theme="dark"] .text-gray-700 { color: #cbd5e1 !important; }
+[data-theme="dark"] .text-gray-500 { color: #94a3b8 !important; }
+[data-theme="dark"] .text-gray-400 { color: #64748b !important; }
+
+/* Borders */
+[data-theme="dark"] .border-gray-200\/50,
+[data-theme="dark"] .border-gray-200\/60 { border-color: rgba(42,42,74,.5) !important; }
+
+/* Hover backgrounds */
+[data-theme="dark"] .hover\:bg-gray-100:hover { background: rgba(255,255,255,.05) !important; }
+[data-theme="dark"] .hover\:bg-gray-50:hover  { background: rgba(255,255,255,.03) !important; }
+[data-theme="dark"] .bg-gray-100 { background: rgba(255,255,255,.06) !important; }
+
+/* Indigo tinted elements */
+[data-theme="dark"] .bg-indigo-50  { background: rgba(129,140,248,.08) !important; }
+[data-theme="dark"] .bg-indigo-100 { background: rgba(129,140,248,.12) !important; }
+[data-theme="dark"] .text-indigo-600 { color: #a5b4fc !important; }
+[data-theme="dark"] .text-indigo-700 { color: #c7d2fe !important; }
+
+/* Page background gradients → solid dark */
+[data-theme="dark"] [class*="from-indigo-50"],
+[data-theme="dark"] [class*="via-white"],
+[data-theme="dark"] [class*="to-violet-50"] {
+  background: #1a1a2e !important;
+  background-image: none !important;
+}
+
+/* Login form — dark mode */
+[data-theme="dark"] [class*="bg-white"] {
+  background: rgba(22,33,62,.85) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-color: rgba(42,42,74,.5) !important;
+}
+
+[data-theme="dark"] .bg-gray-100 {
+  background: rgba(255,255,255,.06) !important;
+}
+
+[data-theme="dark"] .bg-white {
+  background: rgba(22,33,62,.6) !important;
+}
+
+[data-theme="dark"] .shadow-sm {
+  box-shadow: 0 1px 3px rgba(0,0,0,.3) !important;
+}
+
+[data-theme="dark"] .bg-red-50 {
+  background: rgba(220,38,38,.08) !important;
+  border-color: rgba(220,38,38,.2) !important;
+  color: #fca5a5 !important;
+}
+
+/* ============================================
+   DNA DARK MODE — Chat Response Components
+   ============================================ */
+
+/* Dark mode chat bubbles — direct targets */
+[data-theme="dark"] .chat-bubble,
+[data-theme="dark"] .chat-bubble-bot,
+[data-theme="dark"] .sidebar-panel {
+  background: rgba(22,33,62,.85) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: #e2e8f0 !important;
+  border-color: rgba(42,42,74,.6) !important;
+}
+
+[data-theme="dark"] .atunbi-response {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] [class*="from-blue-500"] {
+  --tw-gradient-from: #3b82f6 !important;
+  --tw-gradient-to: #2563eb !important;
+}
+
+[data-theme="dark"] .atunbi-response .section-title {
+  color: #e2e8f0;
+  border-image: linear-gradient(to right, #2a2a4a 0%, transparent 45%) 1;
+}
+
+[data-theme="dark"] .atunbi-response p {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .atunbi-response strong {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .atunbi-response code {
+  background: rgba(129,140,248,.12);
+  color: #a5b4fc;
+}
+
+/* Concept cards — dark */
+[data-theme="dark"] .atunbi-response .concept-card {
+  background: rgba(30,30,46,.7);
+  backdrop-filter: blur(12px);
+  border-color: #2a2a4a;
+  box-shadow: 0 2px 12px rgba(0,0,0,.2);
+}
+
+[data-theme="dark"] .atunbi-response .concept-card-title span:not(.badge) {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .atunbi-response .concept-card-body {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .atunbi-response .concept-card-impact {
+  background: rgba(129,140,248,.06);
+}
+
+[data-theme="dark"] .atunbi-response .concept-card.red .concept-card-impact  { background: rgba(220,38,38,.08); }
+[data-theme="dark"] .atunbi-response .concept-card.green .concept-card-impact { background: rgba(22,163,74,.08); }
+[data-theme="dark"] .atunbi-response .concept-card.purple .concept-card-impact { background: rgba(124,58,237,.08); }
+[data-theme="dark"] .atunbi-response .concept-card.amber .concept-card-impact { background: rgba(234,88,12,.08); }
+
+[data-theme="dark"] .atunbi-response .metric-chip {
+  background: rgba(129,140,248,.1);
+  color: #a5b4fc;
+}
+
+/* Mental model — dark */
+[data-theme="dark"] .atunbi-response .mental-model {
+  background: linear-gradient(135deg, rgba(8,145,178,.08), rgba(8,145,178,.04));
+  border-color: rgba(8,145,178,.2);
+}
+
+[data-theme="dark"] .atunbi-response .mental-model h3 {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .atunbi-response .mental-model p {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .atunbi-response .mm-step {
+  background: rgba(8,145,178,.15);
+  display: block;
+  width: fit-content;
+}
+
+/* Key insight — dark */
+[data-theme="dark"] .atunbi-response .key-insight {
+  background: linear-gradient(135deg, rgba(129,140,248,.08), rgba(129,140,248,.04));
+  border-color: rgba(129,140,248,.2);
+}
+
+/* Danger — dark */
+[data-theme="dark"] .atunbi-response .danger {
+  background: rgba(220,38,38,.06);
+  border-color: rgba(220,38,38,.15);
+}
+
+/* Jargon block — dark */
+[data-theme="dark"] .atunbi-response .jb {
+  background: rgba(30,30,46,.7);
+  border-color: #2a2a4a;
+}
+
+/* Code block — dark (already dark, just refine) */
+[data-theme="dark"] .atunbi-response .cblock {
+  background: #0f0f23;
+  border-left-color: #818cf8;
+}
+
+/* Reveal answer — dark */
+[data-theme="dark"] .atunbi-response .reveal-answer {
+  background: rgba(22,163,74,.06);
+  border-color: rgba(22,163,74,.15);
+}
+
+/* Summary box — dark */
+[data-theme="dark"] .atunbi-response .summary-box {
+  background: linear-gradient(135deg, rgba(129,140,248,.08), rgba(124,58,237,.06));
+  border-color: rgba(129,140,248,.2);
+}
+
+[data-theme="dark"] .atunbi-response .summary-box p {
+  color: #cbd5e1;
+}
+
+/* Bullet list — dark */
+[data-theme="dark"] .atunbi-response .bullet-list li {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .atunbi-response .bullet-list li::before {
+  color: #a5b4fc;
+}
+
+/* ============================================
+   DNA CHAT BUBBLES
+   ============================================ */
+
+.chat-bubble-user {
+  box-shadow: 0 1px 4px rgba(80,70,229,.08);
+}
+
+.chat-bubble-bot {
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+}
+
+[data-theme="dark"] .chat-bubble-user {
+  box-shadow: 0 1px 4px rgba(129,140,248,.12);
+}
+
+[data-theme="dark"] .chat-bubble-bot {
+  box-shadow: 0 1px 3px rgba(0,0,0,.3);
+}
+
+/* Mermaid diagrams in chat */
+.atunbi-response .mermaid {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 1.5rem 0;
+  box-shadow: none;
+  max-width: 100%;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+/* Diagram wrapper — spacing from surrounding text */
+.atunbi-response [style*="linear-gradient"] {
+  margin-top: 1.25rem;
+  margin-bottom: 0;
+}
+.atunbi-response .diagram-caption {
+  font-size: 14px;
+  color: var(--dna-muted);
+  margin-top: 0;
+  line-height: 1.65;
+  text-align: center;
+  padding: 1rem 1.5rem;
+  background: var(--dna-surface);
+  border: 1px solid var(--dna-border);
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.atunbi-response .diagram-caption-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--dna-accent);
+  margin-bottom: .35rem;
+}
+.atunbi-response .diagram-takeaway {
+  font-size: 14px;
+  color: var(--dna-text);
+  line-height: 1.65;
+  text-align: center;
+  padding: .75rem 1.5rem 1rem;
+  background: var(--dna-surface);
+  border: 1px solid var(--dna-border);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+  max-width: 600px;
+  margin: 0 auto 1.5rem;
+}
+.atunbi-response .diagram-takeaway strong {
+  color: var(--dna-accent);
+  font-weight: 500;
+}
+/* Closing paragraph after takeaway — breathing room */
+.atunbi-response .diagram-takeaway + p {
+  margin-top: 1.25rem;
+}

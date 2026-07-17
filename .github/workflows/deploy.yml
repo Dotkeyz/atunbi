@@ -21,10 +21,10 @@ jobs:
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
-          context: ./backend
-          file: ./backend/Dockerfile
+          context: .
+          file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/atunbi-skeleton:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/atunbi:latest
           platforms: linux/amd64
 
       - name: Deploy to Alibaba ECS via SSH
@@ -36,17 +36,27 @@ jobs:
           script: |
             docker stop atunbi-live || true
             docker rm atunbi-live || true
-            docker pull ${{ secrets.DOCKER_USERNAME }}/atunbi-skeleton:latest
-            
+            docker pull ${{ secrets.DOCKER_USERNAME }}/atunbi:latest
+
             # INJECTING THE CLOUD BRAIN & SECRETS AT RUNTIME
-            docker run -d -p 80:8000 \
+            docker run -d -p 80:80 \
+              -e ECS_HOST=1 \
+              -e SECRET_KEY=${{ secrets.SECRET_KEY }} \
               -e QWEN_API_KEY=${{ secrets.QWEN_API_KEY }} \
               -e QWEN_BASE_URL=https://dashscope-intl.aliyuncs.com/compatible-mode/v1 \
+              -e DASHSCOPE_API_KEY=${{ secrets.QWEN_API_KEY }} \
               -e DB_HOST=${{ secrets.DB_HOST }} \
               -e DB_USER=${{ secrets.DB_USER }} \
               -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
               -e DB_NAME=${{ secrets.DB_NAME }} \
               -e DB_PORT=${{ secrets.DB_PORT }} \
-              --name atunbi-live ${{ secrets.DOCKER_USERNAME }}/atunbi-skeleton:latest
-            
+              -e ALIBABA_CLOUD_ACCESS_KEY_ID=${{ secrets.ALIBABA_CLOUD_ACCESS_KEY_ID }} \
+              -e ALIBABA_CLOUD_ACCESS_KEY_SECRET=${{ secrets.ALIBABA_CLOUD_ACCESS_KEY_SECRET }} \
+              -e OSS_BUCKET=${{ secrets.OSS_BUCKET }} \
+              -e OSS_ENDPOINT=${{ secrets.OSS_ENDPOINT }} \
+              -e OSS_REGION=eu-west-1 \
+              -e EVENTBRIDGE_ENDPOINT=eventbridge.eu-west-1.aliyuncs.com \
+              -e EVENTBRIDGE_BUS_NAME=atunbi-memory-bus \
+              --name atunbi-live ${{ secrets.DOCKER_USERNAME }}/atunbi:latest
+
             docker image prune -f

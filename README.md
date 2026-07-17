@@ -8,14 +8,14 @@ Atunbi (Yoruba for "reborn") is a cognitive memory architecture for AI agents. I
 
 Atunbi is deployed as a single Docker container on Alibaba Cloud ECS. Nginx serves the Next.js frontend (static export) and reverse-proxies API requests to FastAPI. Both frontend and backend live in the same container, served on port 80.
 
-| Layer | Technology | Role |
-|-------|-----------|------|
-| **Frontend** | Next.js 16 (React), static export | Chat UI, Cognitive Analytics, Controls, Lifecycle Tuning overlay |
-| **Backend** | FastAPI (Python 3.11) | REST + SSE endpoints, agentic loop, hybrid search, dream phase, entity extraction |
-| **Database** | ApsaraDB RDS (PostgreSQL) + pgvector HNSW index | Persistent storage across 5 memory tiers, cosine similarity vector search |
-| **AI Engine** | Qwen models via DashScope | qwen-max (summarization, reflection), qwen-plus-latest (entity extraction), qwen-turbo (agentic loop, reranker), qwen-flash (scoring), text-embedding-v4 (1536-dim vectors) |
-| **Deployment** | Docker + nginx + GitHub Actions | Multi-stage Docker build → Docker Hub → SSH deploy to ECS. Frontend at `/`, API at `/api/*`, docs at `/api/docs` |
-| **Infrastructure** | Alibaba Cloud | ECS, ApsaraDB RDS, OSS, Function Compute, EventBridge, API Gateway |
+| Layer              | Technology                                      | Role                                                                                                                                                                        |
+| ------------------ | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Frontend**       | Next.js 16 (React), static export               | Chat UI, Cognitive Analytics, Controls, Lifecycle Tuning overlay                                                                                                            |
+| **Backend**        | FastAPI (Python 3.11)                           | REST + SSE endpoints, agentic loop, hybrid search, dream phase, entity extraction                                                                                           |
+| **Database**       | ApsaraDB RDS (PostgreSQL) + pgvector HNSW index | Persistent storage across 5 memory tiers, cosine similarity vector search                                                                                                   |
+| **AI Engine**      | Qwen models via DashScope                       | qwen-max (summarization, reflection), qwen-plus-latest (entity extraction), qwen-turbo (agentic loop, reranker), qwen-flash (scoring), text-embedding-v4 (1536-dim vectors) |
+| **Deployment**     | Docker + nginx + GitHub Actions                 | Multi-stage Docker build → Docker Hub → SSH deploy to ECS. Frontend at `/`, API at `/api/*`, docs at `/api/docs`                                                            |
+| **Infrastructure** | Alibaba Cloud                                   | ECS, ApsaraDB RDS, OSS, Function Compute, EventBridge, API Gateway                                                                                                          |
 
 ## Local Development
 
@@ -113,25 +113,25 @@ Atunbi exposes memory tools to any MCP-compatible client: Claude, Cursor, VS Cod
 
 All seven services below are configured and deployed on Alibaba Cloud (eu-west-1). The `infra/` directory contains infrastructure-as-code YAML files for the gateway, CDC pipeline, and Function Compute source.
 
-| Service | Usage | Status |
-|---------|-------|:---:|
-| **ECS** | Single-server deployment: nginx serves frontend static files and proxies API requests to FastAPI (port 8000) | 🟢 Live |
-| **ApsaraDB RDS** (PostgreSQL) | Persistent memory storage with pgvector HNSW index for hybrid vector + keyword search across five memory tiers | 🟢 Live |
-| **OSS** | File upload storage for the omnichannel ingestion pipeline (images, audio, video, PDF, logs) | 🟢 Live |
-| **Function Compute** | Scheduled dream-trigger (`infra/dream-trigger/main.py`, Python 3.12) — cron invokes `/api/v1/internal/dream` hourly to run memory consolidation across all users | 🟢 Live |
-| **EventBridge** | Event bus connecting the Function Compute cron trigger and routing CDC events from DTS. Bus name: `atunbi-memory-bus` | 🟢 Live |
-| **API Gateway** | 11 routes with JWT auth, rate limiting, CORS, and SSE timeout handling (`infra/api-gateway.yaml`). Provisioned on Serverless tier — routes documented but traffic currently reaches ECS directly via public IP while awaiting Dedicated Instance upgrade for HTTP backend support | 🟡 Provisioned |
-| **DashScope** (Qwen) | Five Qwen models: qwen-max (summarization, reflection), qwen-plus-latest (entity extraction), qwen-turbo (agentic loop, reranker), qwen-flash (scoring), text-embedding-v4 (1536-dim vectors) | 🟢 Live |
+| Service                       | Usage                                                                                                                                                                                                                                                                             |     Status     |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------: |
+| **ECS**                       | Single-server deployment: nginx serves frontend static files and proxies API requests to FastAPI (port 8000)                                                                                                                                                                      |    🟢 Live     |
+| **ApsaraDB RDS** (PostgreSQL) | Persistent memory storage with pgvector HNSW index for hybrid vector + keyword search across five memory tiers                                                                                                                                                                    |    🟢 Live     |
+| **OSS**                       | File upload storage for the omnichannel ingestion pipeline (images, audio, video, PDF, logs)                                                                                                                                                                                      |    🟢 Live     |
+| **Function Compute**          | Scheduled dream-trigger (`infra/dream-trigger/main.py`, Python 3.12) — cron invokes `/api/v1/internal/dream` hourly to run memory consolidation across all users                                                                                                                  |    🟢 Live     |
+| **EventBridge**               | Event bus connecting the Function Compute cron trigger and routing CDC events from DTS. Bus name: `atunbi-memory-bus`                                                                                                                                                             |    🟢 Live     |
+| **API Gateway**               | 11 routes with JWT auth, rate limiting, CORS, and SSE timeout handling (`infra/api-gateway.yaml`). Provisioned on Serverless tier — routes documented but traffic currently reaches ECS directly via public IP while awaiting Dedicated Instance upgrade for HTTP backend support | 🟡 Provisioned |
+| **DashScope** (Qwen)          | Five Qwen models: qwen-max (summarization, reflection), qwen-plus-latest (entity extraction), qwen-turbo (agentic loop, reranker), qwen-flash (scoring), text-embedding-v4 (1536-dim vectors)                                                                                     |    🟢 Live     |
 
 ### Documented Blueprints (`infra/`)
 
 Infrastructure-as-code ready for deployment:
 
-| File | Description |
-|------|-------------|
-| `infra/api-gateway.yaml` | API Gateway configuration — 11 routes, JWT auth plugin, CORS, rate limiting, SSE timeout handling |
-| `infra/dream-trigger/main.py` | Function Compute handler — cron-triggered dream phase scheduler calling the internal API endpoint |
-| `infra/dts-cdc.yaml` | DTS CDC pipeline — WAL-based change data capture from RDS to EventBridge for real-time memory audit events |
+| File                          | Description                                                                                                |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `infra/api-gateway.yaml`      | API Gateway configuration — 11 routes, JWT auth plugin, CORS, rate limiting, SSE timeout handling          |
+| `infra/dream-trigger/main.py` | Function Compute handler — cron-triggered dream phase scheduler calling the internal API endpoint          |
+| `infra/dts-cdc.yaml`          | DTS CDC pipeline — WAL-based change data capture from RDS to EventBridge for real-time memory audit events |
 
 ## License
 

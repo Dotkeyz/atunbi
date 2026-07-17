@@ -307,7 +307,7 @@ export default function Chat({ activeConversationId, resetKey, onMessageSent }: 
         full += token;
         setStreamingContent(full || "\u200B");
       }, abortRef.current.signal, (step) => {
-        const label = step.action === "done" ? `ready · ${step.count || 0} items` : `${step.action.replace("_", " ")} · ${step.detail}`;
+        const label = step.action === "done" ? `ready · ${step.detail}` : `${step.action.replace("_", " ")} · ${step.detail}`;
         setAgentStep(label);
         setAgentSteps(prev => [...prev, step]);
         capturedSteps.push(step);  // local accumulator for completed message

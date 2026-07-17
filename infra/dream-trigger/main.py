@@ -1,16 +1,7 @@
-"""
-Atunbi Dream Phase Scheduler — Function Compute handler.
+"""Atunbi Dream Phase Scheduler — Alibaba Cloud Function Compute handler.
 
-Triggered by EventBridge cron rule (every 1 hour).
-Calls the internal dream endpoint, which runs consolidation for ALL users due.
-Zero state — the app itself tracks last dream time via dream_run_every_h config.
-
-Deploy to Alibaba Cloud Function Compute:
-  Runtime: Python 3.11+
-  Handler: main.handler
-  Env vars:
-    ATUNBI_API_URL  = http://8.211.196.226
-    INTERNAL_API_KEY = <same as SECRET_KEY>
+Triggered by EventBridge cron. Calls the internal dream endpoint.
+Env: ATUNBI_API_URL, INTERNAL_API_KEY
 """
 import os
 import urllib.request
@@ -21,23 +12,17 @@ import logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-API_URL = os.environ.get("ATUNBI_API_URL", "http://8.211.196.226")
-API_KEY = os.environ.get("INTERNAL_API_KEY", "")
+API_URL = os.environ["ATUNBI_API_URL"]
+API_KEY = os.environ["INTERNAL_API_KEY"]
 
 
 def handler(event, context):
-    """Entry point. Event is the EventBridge cron trigger — we ignore its payload."""
-    logger.info("Dream scheduler triggered by EventBridge cron")
-
-    url = f"{API_URL}/api/v1/internal/dream"
+    logger.info("Dream scheduler triggered")
 
     req = urllib.request.Request(
-        url,
+        f"{API_URL}/api/v1/internal/dream",
         method="POST",
-        headers={
-            "X-API-Key": API_KEY,
-            "Content-Type": "application/json",
-        },
+        headers={"X-API-Key": API_KEY, "Content-Type": "application/json"},
     )
 
     try:
@@ -48,6 +33,6 @@ def handler(event, context):
     except urllib.error.HTTPError as e:
         logger.error(f"Dream endpoint returned {e.code}: {e.read().decode()}")
         return {"status": "error", "code": e.code}
-    except Exception as e:
+    except Exception:
         logger.exception("Dream scheduler failed")
-        return {"status": "error", "detail": str(e)}
+        return {"status": "error", "detail": "exception"}

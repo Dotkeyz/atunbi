@@ -100,13 +100,13 @@ export default function AgentTrace({
   const contradictions: Array<{entity: string; relation: string; old_target: string; new_target: string}> =
     (graphStep as any)?.contradictions || [];
 
-  // Build nodes and edges from paths
+  // Build nodes and edges from paths — Query tab: only depth-1 (direct connections)
   const { initialNodes, initialEdges } = useMemo(() => {
     if (!graphStep?.paths || graphStep.paths.length === 0) {
       return { initialNodes: [], initialEdges: [] };
     }
 
-    const paths = graphStep.paths;
+    const paths = (graphStep.paths as any[]).filter((p: any) => (p.depth || 0) <= 1);
 
     const conflictKeys = new Set<string>();
     (contradictions).forEach((c: any) => {

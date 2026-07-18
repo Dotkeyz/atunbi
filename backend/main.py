@@ -17,7 +17,7 @@ async def lifespan(app: FastAPI):
     logger.info("Ready.")
     yield
 
-app = FastAPI(title="Atunbi", docs_url="/api/docs", lifespan=lifespan)
+app = FastAPI(title="Atunbi", docs_url="/api/docs", openapi_url="/api/openapi.json", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

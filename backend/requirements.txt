@@ -17,3 +17,4 @@ alibabacloud_eventbridge
 oss2
 dashscope
 PyPDF2>=3.0
+mcp

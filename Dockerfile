@@ -23,6 +23,7 @@ RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
 # Backend
 WORKDIR /app
 COPY --from=backend /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=backend /usr/local/bin /usr/local/bin
 COPY --from=backend /app /app
 
 # Frontend (Next.js static export)

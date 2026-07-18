@@ -13,7 +13,6 @@ async def init_db():
         await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
         await conn.run_sync(SQLModel.metadata.create_all)
 
-        # Vector similarity indexes
         await conn.execute(text(
             "CREATE INDEX IF NOT EXISTS idx_wm_embedding_hnsw "
             "ON workingmemory USING hnsw (embedding vector_cosine_ops);"
@@ -27,14 +26,6 @@ async def init_db():
             "ON episodicmemory USING hnsw (embedding vector_cosine_ops);"
         ))
 
-        # Column already applied — skip to avoid lock contention on concurrent startups
-        await conn.execute(text(
-            "ALTER TABLE entitymemory ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'active';"
-        ))
-        await conn.execute(text(
-            "ALTER TABLE \"user\" ADD COLUMN IF NOT EXISTS display_name VARCHAR;"
-        ))
-    
     async with async_session() as session:
         result = await session.execute(select(SystemConfig))
         if not result.scalars().first():

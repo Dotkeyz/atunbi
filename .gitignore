@@ -20,4 +20,5 @@ docs
 TESTS
 
 # Build artifacts
+*.bak
 infra/dream-trigger/*.zip

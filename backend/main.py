@@ -19,18 +19,13 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Atunbi", docs_url="/api/docs", lifespan=lifespan)
 
-
-@app.get("/health")
-async def health_check():
-    return {"status": "ok"}
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, restrict this to your frontend URL
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 app.include_router(auth.router, prefix="/auth")
 app.include_router(history.router, prefix="/api/v1")
@@ -40,8 +35,10 @@ app.include_router(config.router, prefix="/api/v1")
 app.include_router(stats.router, prefix="/api/v1")
 app.include_router(ingestion.router, prefix="/api/v1")
 app.include_router(tools.router, prefix="/api/v1")
-app.include_router(mcp_router)
+if mcp_router is not None:
+    app.include_router(mcp_router)
+
 
 @app.get("/health")
 async def health_check():
-    return {"status": "alive", "service": "atunbi", "brain": "connected"}
+    return {"status": "ok"}

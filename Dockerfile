@@ -29,18 +29,36 @@ COPY --from=backend /app /app
 # Frontend (Next.js static export)
 COPY --from=frontend-builder /app/frontend/out /usr/share/nginx/html
 
-# Nginx config
-RUN echo 'server { \
-    listen 80; \
-    proxy_http_version 1.1; \
-    proxy_read_timeout 600s; \
-    proxy_buffering off; \
-    location /api/ { proxy_pass http://127.0.0.1:8000; proxy_set_header Host $host; proxy_set_header Connection ""; } \
-    location /mcp/ { proxy_pass http://127.0.0.1:8000; proxy_set_header Host $host; } \
-    location /auth/ { proxy_pass http://127.0.0.1:8000; proxy_set_header Host $host; } \
-    location /health { proxy_pass http://127.0.0.1:8000; proxy_set_header Host $host; } \
-    location / { try_files $uri $uri/ /index.html; } \
-}' > /etc/nginx/sites-enabled/default
+# Nginx config — replace default entirely
+RUN rm -f /etc/nginx/sites-enabled/default && echo ' \
+events { worker_connections 1024; } \
+http { \
+    include /etc/nginx/mime.types; \
+    default_type application/octet-stream; \
+    sendfile on; \
+    keepalive_timeout 65; \
+    server { \
+        listen 80; \
+        location /api/ { \
+            proxy_pass http://127.0.0.1:8000; \
+            proxy_http_version 1.1; \
+            proxy_set_header Host $host; \
+            proxy_set_header Connection ""; \
+            proxy_buffering off; \
+            proxy_read_timeout 600s; \
+        } \
+        location /mcp/ { \
+            proxy_pass http://127.0.0.1:8000; \
+            proxy_http_version 1.1; \
+            proxy_set_header Host $host; \
+            proxy_set_header Connection ""; \
+            proxy_buffering off; \
+        } \
+        location /auth/ { proxy_pass http://127.0.0.1:8000; proxy_set_header Host $host; } \
+        location /health { proxy_pass http://127.0.0.1:8000; proxy_set_header Host $host; } \
+        location / { root /usr/share/nginx/html; try_files $uri $uri/ /index.html; } \
+    } \
+}' > /etc/nginx/nginx.conf
 
 # Startup script
 RUN echo '#!/bin/sh\nuvicorn main:app --host 0.0.0.0 --port 8000 &\nnginx -g "daemon off;"' > /start.sh && chmod +x /start.sh

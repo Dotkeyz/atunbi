@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect, memo } from "react";
 import { streamChat, getConversationMessages } from "@/lib/api";
-import { Send, BrainCircuit, Upload, Loader2, Check, Square, FileText, Image, Video, File } from "lucide-react";
+import { Send, BrainCircuit, Upload, Loader2, Check, Square, FileText, Image, Video, File, Mic, MicOff } from "lucide-react";
 import { API_URL, ACCEPTED_INPUT_TYPES } from "@/lib/constants";
 import AgentTrace from "@/components/AgentTrace";
 
@@ -65,6 +65,9 @@ export default function Chat({ activeConversationId, resetKey, onMessageSent }: 
   const [agentStep, setAgentStep] = useState("");
   const [agentSteps, setAgentSteps] = useState<AgentStep[]>([]);
   const abortRef = useRef<AbortController | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
   const stopAction = () => {
     if (abortRef.current) {
@@ -136,6 +139,31 @@ export default function Chat({ activeConversationId, resetKey, onMessageSent }: 
       // Auto-dismiss overlay after showing result
       setTimeout(() => setUploadStatus("idle"), 3000);
     }
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      chunksRef.current = [];
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+      recorder.onstop = () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const file = new File([blob], `recording-${Date.now()}.webm`, { type: 'audio/webm' });
+        handleUpload(file);
+      };
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+    } catch (e) {
+      console.error('Mic access denied:', e);
+    }
+  };
+
+  const stopRecording = () => {
+    mediaRecorderRef.current?.stop();
+    setIsRecording(false);
   };
 
   useEffect(() => { const u = localStorage.getItem("username"); if (u) setUsername(u); }, []);
@@ -500,6 +528,18 @@ export default function Chat({ activeConversationId, resetKey, onMessageSent }: 
           <input ref={fileRef} type="file" className="hidden" accept={ACCEPTED_INPUT_TYPES} onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(f); }} />
           <button onClick={() => fileRef.current?.click()} disabled={isLoading || uploadStatus === "uploading"} className="p-3.5 rounded-xl text-[var(--dna-muted)] hover:text-[var(--dna-accent)] hover:bg-[var(--dna-accent-light)] border border-dashed border-[var(--dna-border)] hover:border-[var(--dna-accent-border)] transition disabled:opacity-50 flex-shrink-0" title="Upload file">
             {uploadStatus === "uploading" ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
+          </button>
+          <button
+            onClick={isRecording ? stopRecording : startRecording}
+            disabled={isLoading || uploadStatus === "uploading"}
+            className={`p-3.5 rounded-xl border transition disabled:opacity-50 flex-shrink-0 ${
+              isRecording
+                ? "bg-red-500 text-white border-red-500 animate-pulse shadow-lg"
+                : "text-[var(--dna-muted)] hover:text-red-500 hover:bg-red-50 border-dashed border-[var(--dna-border)] hover:border-red-300"
+            }`}
+            title={isRecording ? "Stop recording" : "Record audio"}
+          >
+            {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
           </button>
           {(isLoading || uploadStatus === "uploading") ? (
             <button onClick={stopAction} className="bg-red-500 hover:bg-red-400 text-white p-3.5 rounded-xl transition shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 flex-shrink-0" title="Stop">

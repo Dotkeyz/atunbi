@@ -36,7 +36,7 @@ app.include_router(stats.router, prefix="/api/v1")
 app.include_router(ingestion.router, prefix="/api/v1")
 app.include_router(tools.router, prefix="/api/v1")
 if mcp_router is not None:
-    app.include_router(mcp_router)
+    app.include_router(mcp_router, include_in_schema=False)
 
 
 @app.get("/health")

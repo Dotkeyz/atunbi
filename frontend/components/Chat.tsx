@@ -316,11 +316,14 @@ export default function Chat({ activeConversationId, resetKey, onMessageSent }: 
         setConversationId(newConvId);
       }
       setStreamingContent("");
-      const updatedMessages = [...messages, { role: "assistant", content: sanitizeResponse(full), agentSteps: capturedSteps }];
-      setMessages(updatedMessages);
-      // Save agent steps immediately — don't wait for deferred useEffect
+      let finalMessages: { role: string; content: string; agentSteps?: AgentStep[] }[] = [];
+      setMessages(prev => {
+        const next = [...prev, { role: "assistant", content: sanitizeResponse(full), agentSteps: capturedSteps }];
+        finalMessages = next;
+        return next;
+      });
       if (newConvId || conversationId) {
-        persistMeta(newConvId || conversationId!, updatedMessages);
+        persistMeta(newConvId || conversationId!, finalMessages);
       }
       if (onMessageSent) onMessageSent();
     } catch (err: any) {

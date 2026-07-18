@@ -32,8 +32,11 @@ COPY --from=frontend-builder /app/frontend/out /usr/share/nginx/html
 # Nginx config
 RUN echo 'server { \
     listen 80; \
-    location /api/ { proxy_pass http://127.0.0.1:8000; proxy_set_header Host $host; proxy_buffering off; } \
-    location /mcp/ { proxy_pass http://127.0.0.1:8000; proxy_set_header Host $host; proxy_buffering off; } \
+    proxy_http_version 1.1; \
+    proxy_read_timeout 600s; \
+    proxy_buffering off; \
+    location /api/ { proxy_pass http://127.0.0.1:8000; proxy_set_header Host $host; proxy_set_header Connection ""; } \
+    location /mcp/ { proxy_pass http://127.0.0.1:8000; proxy_set_header Host $host; } \
     location /auth/ { proxy_pass http://127.0.0.1:8000; proxy_set_header Host $host; } \
     location /health { proxy_pass http://127.0.0.1:8000; proxy_set_header Host $host; } \
     location / { try_files $uri $uri/ /index.html; } \

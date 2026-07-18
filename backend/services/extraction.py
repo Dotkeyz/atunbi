@@ -29,10 +29,9 @@ def _validate_entity(ent: dict) -> bool:
     NON_PROPER_RELATIONS = {'prefers_not_to_discuss', 'avoids', 'dislikes'}
     if rel not in NON_PROPER_RELATIONS:
         en_raw = ent.get("entity_name", "")
-        tn_raw = ent.get("target_name", "")
         if not any(c.isupper() for c in en_raw):
             return False
-        if not any(c.isupper() for c in tn_raw):
+        if ent.get("target_name", "").strip().lower() in PRONOUNS_AND_COMMON:
             return False
 
     ROLE_WORDS = {
@@ -104,9 +103,8 @@ CRITICAL RULES:
         )
         content = response.choices[0].message.content
         result = json.loads(content)
-        entities = result.get("entities", [])
-        if isinstance(entities, list):
-            entities = [e for e in entities if _validate_entity(e)]
+        raw_entities = result.get("entities", [])
+        entities = [e for e in raw_entities if _validate_entity(e)] if isinstance(raw_entities, list) else []
         contradictions = result.get("contradictions", [])
         if not isinstance(contradictions, list):
             contradictions = []

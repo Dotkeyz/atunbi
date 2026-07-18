@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect, memo } from "react";
 import { streamChat, getConversationMessages } from "@/lib/api";
-import { Send, BrainCircuit, Upload, Loader2, Check, Square, FileText, Image, Video, File, Mic, MicOff } from "lucide-react";
+import { Send, BrainCircuit, Upload, Loader2, Check, Square, FileText, Image, Video, File as FileIcon, Mic, MicOff } from "lucide-react";
 import { API_URL, ACCEPTED_INPUT_TYPES } from "@/lib/constants";
 import AgentTrace from "@/components/AgentTrace";
 
@@ -66,6 +66,8 @@ export default function Chat({ activeConversationId, resetKey, onMessageSent }: 
   const [agentSteps, setAgentSteps] = useState<AgentStep[]>([]);
   const abortRef = useRef<AbortController | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
@@ -118,14 +120,16 @@ export default function Chat({ activeConversationId, resetKey, onMessageSent }: 
         setConversationId(data.conversation_id);
       }
       let resultText: string;
-      if (data.status === "ingested") {
+      if (data.transcript) {
+        resultText = data.transcript;
+      } else if (data.status === "ingested") {
         resultText = `${data.segments} segment${data.segments !== 1 ? "s" : ""} from ${file.name} ingested`;
       } else if (data.status === "unsupported") {
         resultText = `${file.name}: format not supported`;
       } else {
         resultText = `${file.name} processed`;
       }
-      setUploadResult(resultText);
+      setUploadResult(data.transcript ? "Transcribed ✓" : resultText);
       setUploadStatus("success");
       setMessages(prev => [...prev, { role: "user", content: resultText, attachment }]);
       if (onMessageSent) onMessageSent();
@@ -156,6 +160,8 @@ export default function Chat({ activeConversationId, resetKey, onMessageSent }: 
       recorder.start();
       mediaRecorderRef.current = recorder;
       setIsRecording(true);
+      setElapsed(0);
+      timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
     } catch (e) {
       console.error('Mic access denied:', e);
     }
@@ -164,6 +170,7 @@ export default function Chat({ activeConversationId, resetKey, onMessageSent }: 
   const stopRecording = () => {
     mediaRecorderRef.current?.stop();
     setIsRecording(false);
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
   };
 
   useEffect(() => { const u = localStorage.getItem("username"); if (u) setUsername(u); }, []);
@@ -505,6 +512,26 @@ export default function Chat({ activeConversationId, resetKey, onMessageSent }: 
       </div>
       <div className="p-5 border-t border-[var(--dna-border)] bg-[var(--dna-glass)] backdrop-blur-sm rounded-b-2xl">
         <div className="flex gap-3 items-end">
+          {isRecording ? (
+            <div className="flex-1 flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-5 py-3.5">
+              <div className="flex items-center gap-0.5 h-8">
+                {[0.6, 0.3, 0.9, 0.5, 1.0, 0.4, 0.7, 0.5, 0.8].map((h, i) => (
+                  <span
+                    key={i}
+                    className="w-[3px] bg-red-400 rounded-full inline-block"
+                    style={{
+                      height: `${h * 24}px`,
+                      animation: `waveform-bar ${0.55 + i * 0.05}s ease-in-out infinite alternate`,
+                      animationDelay: `${i * 0.1}s`,
+                    }}
+                  />
+                ))}
+              </div>
+              <span className="text-xs font-medium text-red-500 tabular-nums min-w-[40px]">
+                {elapsed}s
+              </span>
+            </div>
+          ) : (
           <textarea
             value={input}
             onChange={e => {
@@ -525,6 +552,7 @@ export default function Chat({ activeConversationId, resetKey, onMessageSent }: 
             className="flex-1 bg-[var(--dna-surface)] text-[var(--dna-text)] px-5 py-3.5 rounded-xl text-sm border border-[var(--dna-border)] focus:outline-none focus:ring-2 focus:ring-[var(--dna-accent)]/50 focus:border-[var(--dna-accent)] placeholder-[var(--dna-muted)] transition shadow-sm resize-none overflow-y-hidden"
             disabled={isLoading}
           />
+          )}
           <input ref={fileRef} type="file" className="hidden" accept={ACCEPTED_INPUT_TYPES} onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(f); }} />
           <button onClick={() => fileRef.current?.click()} disabled={isLoading || uploadStatus === "uploading"} className="p-3.5 rounded-xl text-[var(--dna-muted)] hover:text-[var(--dna-accent)] hover:bg-[var(--dna-accent-light)] border border-dashed border-[var(--dna-border)] hover:border-[var(--dna-accent-border)] transition disabled:opacity-50 flex-shrink-0" title="Upload file">
             {uploadStatus === "uploading" ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
@@ -610,7 +638,7 @@ function AttachmentCard({ a }: { a: FileAttachment }) {
       ) : a.fileType === 'pdf' ? (
         <div className="w-16 h-16 rounded-lg bg-red-50 dark:bg-red-500/5 flex items-center justify-center"><FileText size={24} className="text-red-500" /></div>
       ) : (
-        <div className="w-16 h-16 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center"><File size={24} className="text-[var(--dna-muted)]" /></div>
+        <div className="w-16 h-16 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center"><FileIcon size={24} className="text-[var(--dna-muted)]" /></div>
       )}
       <div className="flex-1 min-w-0">
         <p className="text-[13px] font-medium text-[var(--dna-text)] truncate">{a.fileName}</p>

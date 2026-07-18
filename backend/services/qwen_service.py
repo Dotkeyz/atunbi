@@ -1,7 +1,9 @@
 from openai import AsyncOpenAI
 from core.config import QWEN_API_KEY, QWEN_BASE_URL
+from dashscope import MultiModalConversation
 import asyncio
 import base64
+import dashscope
 import json
 import os
 import re
@@ -496,10 +498,6 @@ async def _get_video_duration(file_bytes: bytes) -> float:
 
 
 async def _caption_audio(file_bytes: bytes) -> str:
-    """Transcribe speech audio using Qwen3 ASR via workspace endpoint.
-    Dedicated ASR model — more accurate than captioner for spoken content."""
-    import dashscope
-    from dashscope import MultiModalConversation
     
     def _call_sync() -> str:
         audio_path = os.path.join(tempfile.mkdtemp(), "audio.wav")

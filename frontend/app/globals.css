@@ -825,3 +825,8 @@ body {
 .atunbi-response .diagram-takeaway + p {
   margin-top: 1.25rem;
 }
+
+@keyframes waveform-bar {
+  0%   { transform: scaleY(0.3); }
+  100% { transform: scaleY(1.0); }
+}

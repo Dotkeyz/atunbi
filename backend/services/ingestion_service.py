@@ -16,7 +16,7 @@ from typing import Optional
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from repositories import memory_repo, entity_repo
-from services.qwen_service import get_embedding, score_message, get_client, OMNI_MODEL
+from services.qwen_service import get_embedding, score_message, get_client, OMNI_MODEL, _caption_audio
 from services.extraction import extract_entities
 from services.storage_service import upload_file, build_oss_key
 from models import WorkingMemory, EntityMemory, FileAttachment
@@ -115,22 +115,24 @@ async def ingest_text(
         await memory_repo.save_working_memory(db, memory)
         injected += 1
         
-        if not re.match(r'^(video|image|audio):', source_label):
+        if not re.match(r'^(video|image):', source_label):
             try:
-                entities = await extract_entities(para[:500])
+                result = await extract_entities(para[:500])
+                entities = result.get("entities", []) if isinstance(result, dict) else []
                 for ent in entities:
-                    if ent.get("entity_name", "").lower() == ent.get("target_name", "").lower():
+                    en = ent.get("entity_name", "")
+                    rel = ent.get("relation", "")
+                    tn = ent.get("target_name", "")
+                    if en.lower() == tn.lower():
                         continue
-                    existing = await entity_repo.find_entity_edge(
-                        db, user_id, ent.get("entity_name", ""), ent.get("relation", ""), ent.get("target_name", "")
-                    )
+                    existing = await entity_repo.find_entity_edge(db, user_id, en, rel, tn)
                     if not existing:
                         entity_mem = EntityMemory(
                             user_id=user_id,
-                            entity_name=ent.get("entity_name", ""),
+                            entity_name=en,
                             entity_type=ent.get("entity_type", "unknown"),
-                            relation=ent.get("relation", ""),
-                            target_name=ent.get("target_name", ""),
+                            relation=rel,
+                            target_name=tn,
                             target_type=ent.get("target_type", "unknown"),
                             source_message_id=memory.id,
                             conversation_id=conversation_id,
@@ -140,8 +142,8 @@ async def ingest_text(
                         await entity_repo.save_entity(db, entity_mem)
                 if entities:
                     invalidate_graph(user_id)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"[Entity Save] Failed for source={source_label}: {e}")
 
     if truncated_count:
         logger.warning(
@@ -297,19 +299,45 @@ async def ingest_file(
     attachment = await _store_file_in_oss(db, user_id, file_content, filename, mime_type, conversation_id)
 
     if ext in ('mp3','wav','m4a','ogg','flac','aac','mp4','mov','avi','webm','mkv','png','jpg','jpeg','gif','webp','bmp','pdf'):
-        analysis = await _analyze_media(file_content, filename, mime_type)
-        preview = (analysis or "")[:200]
+        is_audio = ext in ('mp3','wav','m4a','ogg','flac','aac')
+        is_video = ext in ('mp4','mov','avi','webm','mkv')
+        is_visual = ext in ('png','jpg','jpeg','gif','webp','bmp')
+        is_webm = ext == 'webm'
+
+        transcript = None
+        if is_audio or is_webm:
+            try:
+                transcript = await _caption_audio(file_content)
+            except Exception as e:
+                logger.warning(f"[Ingest] Transcription failed for {filename}: {e}")
+        elif is_video:
+            try:
+                transcript = await _caption_audio(file_content)
+            except Exception:
+                pass
+
+        visual_analysis = None
+        if is_visual or (is_video and not is_webm) or ext == 'pdf':
+            visual_analysis = await _analyze_media(file_content, filename, mime_type)
+
+        parts = []
+        if transcript:
+            parts.append(f"[Transcript]: {transcript}")
+        if visual_analysis:
+            parts.append(f"[Visual]: {visual_analysis}")
+        analysis = "\n\n".join(parts) if parts else None
+        preview = (transcript or visual_analysis or "")[:200]
+        
         await _save_display_message(db, user_id, conversation_id, filename, ext, size, preview)
         if analysis:
-            kind = ext if ext != 'pdf' else 'pdf'
-            if ext in ('mp3','wav','m4a','ogg','flac','aac'):
+            kind = 'audio' if is_audio else ('video' if is_video else ('image' if is_visual else ext))
+            if is_webm and transcript and not visual_analysis:
                 kind = 'audio'
-            elif ext in ('mp4','mov','avi','webm','mkv'):
-                kind = 'video'
-            elif ext in ('png','jpg','jpeg','gif','webp','bmp'):
-                kind = 'image'
-            await ingest_text(db, user_id, f"[{kind.capitalize()} analysis: {filename}]\n{analysis}", f"{kind}:{filename}", conversation_id, role="system", whole=True)
-        return {"status": "stored", "filename": filename, "file_size": len(file_content), "oss_key": attachment.oss_key, "conversation_id": conversation_id}
+
+            display_text = transcript if (is_audio or is_webm) and transcript else visual_analysis or analysis
+            source_label = "voice note" if (is_audio or is_webm) else ("video note" if is_video else ("image" if is_visual else "document"))
+            await ingest_text(db, user_id, display_text, source_label, conversation_id, role="user", whole=(kind != 'audio'))
+        return {"status": "stored", "filename": filename, "file_size": len(file_content), "oss_key": attachment.oss_key, "conversation_id": conversation_id, "transcript": transcript}
     
     if ext in ('txt','md','csv','log'):
         text = file_content.decode('utf-8', errors='replace')

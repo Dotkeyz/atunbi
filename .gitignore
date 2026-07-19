@@ -9,6 +9,9 @@ node_modules/
 .next/
 out/
 
+# Function Compute deployment package
+infra/dream-trigger/main.py.zip
+
 # IDE & OS
 .vscode/
 .idea/
@@ -18,6 +21,8 @@ Thumbs.db
 notes
 docs
 TESTS
+blog
+demo
 
 # Build artifacts
 *.bak

@@ -120,7 +120,7 @@ DB_PASSWORD=atunbi_secret
 
 ## MCP Server (Model Context Protocol)
 
-Atunbi exposes memory tools to any MCP-compatible client: Claude, Cursor, VS Code, and Qwen Chat.
+Atunbi exposes memory tools to any MCP-compatible client: Claude Desktop, Cursor, and VS Code.
 
 ### Local (stdio)
 
@@ -161,8 +161,8 @@ All seven services below are configured and deployed on Alibaba Cloud (eu-west-1
 | **ApsaraDB RDS** (PostgreSQL) | Persistent memory storage with pgvector HNSW index for hybrid vector + keyword search across five memory tiers                                                                                                                                                                    |    🟢 Live     |
 | **OSS**                       | File upload storage for the omnichannel ingestion pipeline (images, audio, video, PDF, logs)                                                                                                                                                                                      |    🟢 Live     |
 | **Function Compute**          | Scheduled dream-trigger (`infra/dream-trigger/main.py`, Python 3.12) — cron invokes `/api/v1/internal/dream` hourly to run memory consolidation across all users                                                                                                                  |    🟢 Live     |
-| **EventBridge**               | Event bus connecting the Function Compute cron trigger and routing CDC events from DTS. Bus name: `atunbi-memory-bus`                                                                                                                                                             |    🟢 Live     |
-| **API Gateway**               | 11 routes with JWT auth, rate limiting, CORS, and SSE timeout handling (`infra/api-gateway.yaml`). Provisioned on Serverless tier — routes documented but traffic currently reaches ECS directly via public IP while awaiting Dedicated Instance upgrade for HTTP backend support | 🟡 Provisioned |
+| **EventBridge**               | Event bus for Function Compute cron trigger. Bus name: `atunbi-memory-bus` | 🟡 Not configured |
+| **API Gateway**               | 11 routes with JWT auth, rate limiting, CORS, SSE timeout handling | 🟡 Not provisioned |
 | **DashScope** (Qwen)          | Five Qwen models: qwen-max (summarization, reflection), qwen-plus-latest (entity extraction), qwen-turbo (agentic loop, reranker), qwen-flash (scoring), text-embedding-v4 (1536-dim vectors)                                                                                     |    🟢 Live     |
 
 ### Documented Blueprints (`infra/`)

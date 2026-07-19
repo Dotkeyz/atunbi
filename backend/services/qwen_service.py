@@ -4,7 +4,7 @@ from dashscope import MultiModalConversation
 import asyncio
 import base64
 import dashscope
-import fitz  # pymupdf
+import fitz
 import json
 import os
 import re
@@ -119,7 +119,6 @@ EMOTION (-1.0 to 1.0):
         return 0.5, 0.0
 
 
-# Convenience wrappers — prefer score_message() directly
 async def score_importance(text: str) -> float:
     importance, _ = await score_message(text)
     return importance
@@ -184,12 +183,10 @@ async def rerank_results(query: str, candidates: list[tuple], top_n: int = 50) -
             answer = response.choices[0].message.content.strip().lower().replace('.', '')
             return (candidate, "yes" in answer)
         except Exception:
-            return (candidate, True)  # On error, keep the candidate (fail open)
+            return (candidate, True)
     
-    # Check in sequential mini-batches to avoid rate limits.
-    # Early termination has TWO triggers:
-    # 1. SIGNAL FADED: 3+ relevant found, then 3 consecutive "no" → stop.
-    # 2. ALL NOISE: 8 checked, 0 relevant → stop.
+    # Early termination: stop when signal fades (3+ relevant then 3 consecutive no)
+    # or when all noise (8 checked, 0 relevant)
     kept = []
     consecutive_no = 0
     found_relevant = 0
@@ -223,7 +220,6 @@ async def rerank_results(query: str, candidates: list[tuple], top_n: int = 50) -
         # Brief pause between batches to respect rate limits
         await asyncio.sleep(0.2)
     
-    # Return relevant ones. If nothing relevant, return top 3 anyway.
     return kept
 
 ATUNBI_BASE_PROMPT = """You are Atunbi, an AI with memory. Respond based on context from past conversations. Your tone is warm, precise, and helpful.
@@ -630,7 +626,7 @@ def _parse_and_execute_tools(response_text: str) -> tuple[str, bool]:
 async def generate_stream(context: str, user_message: str, temperature: float = 0.7, media_file: str = None, system_prompt: str | None = None):
     client = get_client()
     user_prompt = f"User's message: \"{user_message}\"\n\nYour Response:"
-    content_built = False  # Track if user_content was already constructed
+    content_built = False
     
     if media_file:
         file_data = _file_store.get(media_file)
@@ -680,7 +676,6 @@ async def generate_stream(context: str, user_message: str, temperature: float = 
                     content_built = True
                 media_part = None
             elif mime_type == 'application/pdf':
-                # Render PDF pages as images — omni model reads them visually
                 pages = _render_pdf_pages(file_bytes)
                 if pages:
                     page_images = [
@@ -735,7 +730,7 @@ async def generate_stream(context: str, user_message: str, temperature: float = 
                 if chunk.choices and chunk.choices[0].delta.content is not None:
                     token = chunk.choices[0].delta.content
                     full_response += token
-                    yield token  # Stream immediately — user sees each word as it arrives
+                    yield token
             
             # Check for tool calls and execute if found
             final_text, had_tools = _parse_and_execute_tools(full_response)

@@ -2,20 +2,70 @@
 
 **Track 1: MemoryAgent** | [Qwen Cloud Global AI Hackathon](https://qwencloud-hackathon.devpost.com/)
 
-Atunbi (Yoruba for "reborn") is a cognitive memory architecture for AI agents. It provides persistent, decaying, and consolidating memory across three tiers: Working, Episodic, and Semantic, enabling cross-session recall, adaptive forgetting, and nightly consolidation ("Dream Phase").
+Atunbi (Yoruba for "reborn") is a cognitive memory architecture for AI agents. Every memory earns its life: scored on importance when it arrives, lifespan extended each time it's retrieved, and consolidated or pruned nightly during the "Dream Phase." It provides persistent memory across five tiers: Working, Episodic, Semantic, Entity, and Procedural, with contradiction detection, cross-session entity graph traversal, and adaptive forgetting.
 
 ## Architecture
 
+```mermaid
+%%{init: {"flowchart": {"subGraphTitleMargin": {"top": 20, "bottom": 5}}}}%%
+flowchart TB
+    subgraph SERVING ["SERVING PATH (Real-Time)"]
+        direction TB
+        U["User Chat Interface"]
+        L1["Layer 1: INGEST\nAudio, Video, PDF, Text"]
+        L2["Layer 2: PROCESS\nASR, Vision, Entity Extraction, Scoring"]
+        L3_WM["Layer 3: WORKING MEMORY\nRaw Messages + Embeddings"]
+        L4["Layer 4: RETRIEVAL\nAgentic Loop: Rewrite, RRF, Graph, Generate"]
+    end
+
+    subgraph LEARNING ["LEARNING PATH (Nightly)"]
+        direction TB
+        DREAM["Dream Phase\nFunction Compute + EventBridge"]
+        L3_EP["Layer 3: EPISODIC MEMORY\nConversation Summaries"]
+        L3_SM["Layer 3: SEMANTIC MEMORY\nExtracted Facts"]
+    end
+
+    subgraph INFRA ["Layer 5: INFRASTRUCTURE"]
+        direction TB
+        ALI["Alibaba Cloud: ECS, RDS, OSS, EventBridge"]
+    end
+
+    U -->|"Uploads"| L1
+    L1 -->|"Raw files"| L2
+    L2 -->|"Embeddings, Entities, Scores"| L3_WM
+    L3_WM -->|"Query context"| L4
+    L4 -->|"Generated response"| U
+    L4 -.->|"Increment access_count"| L3_WM
+
+    L3_WM -.->|"Nightly consolidation"| DREAM
+    DREAM -.->|"Clustered summaries"| L3_EP
+    DREAM -.->|"Extracted facts"| L3_SM
+
+    L1 -.->|"Stored in"| ALI
+    L3_WM -.->|"Persisted via"| ALI
+    DREAM -.->|"Triggered by"| ALI
+
+    style U fill:#dcfce7,stroke:#86efac,color:#166534
+    style L1 fill:#e0e7ff,stroke:#a5b4fc,color:#4338ca
+    style L2 fill:#dbeafe,stroke:#93c5fd,color:#1e40af
+    style L3_WM fill:#e0e7ff,stroke:#a5b4fc,color:#4338ca
+    style L4 fill:#fed7aa,stroke:#fdba74,color:#9a3412
+    style DREAM fill:#fef3c7,stroke:#f59e0b,color:#92400e
+    style L3_EP fill:#e0e7ff,stroke:#a5b4fc,color:#4338ca
+    style L3_SM fill:#e0e7ff,stroke:#a5b4fc,color:#4338ca
+    style ALI fill:#f1f5f9,stroke:#cbd5e1,color:#334155
+```
+
 Atunbi is deployed as a single Docker container on Alibaba Cloud ECS. Nginx serves the Next.js frontend (static export) and reverse-proxies API requests to FastAPI. Both frontend and backend live in the same container, served on port 80.
 
-| Layer              | Technology                                      | Role                                                                                                                                                                        |
-| ------------------ | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Frontend**       | Next.js 16 (React), static export               | Chat UI, Cognitive Analytics, Controls, Lifecycle Tuning overlay                                                                                                            |
-| **Backend**        | FastAPI (Python 3.11)                           | REST + SSE endpoints, agentic loop, hybrid search, dream phase, entity extraction                                                                                           |
-| **Database**       | ApsaraDB RDS (PostgreSQL) + pgvector HNSW index | Persistent storage across 5 memory tiers, cosine similarity vector search                                                                                                   |
-| **AI Engine**      | Qwen models via DashScope                       | qwen-max (summarization, reflection), qwen-plus-latest (entity extraction), qwen-turbo (agentic loop, reranker), qwen-flash (scoring), text-embedding-v4 (1536-dim vectors) |
-| **Deployment**     | Docker + nginx + GitHub Actions                 | Multi-stage Docker build → Docker Hub → SSH deploy to ECS. Frontend at `/`, API at `/api/*`, docs at `/api/docs`                                                            |
-| **Infrastructure** | Alibaba Cloud                                   | ECS, ApsaraDB RDS, OSS, Function Compute, EventBridge, API Gateway                                                                                                          |
+| Layer              | Technology                                      | Role                                                                                                                                                                                            |
+| ------------------ | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Frontend**       | Next.js 16 (React), static export               | Chat UI, Cognitive Analytics, Controls                                                                                                                                                          |
+| **Backend**        | FastAPI (Python 3.11)                           | REST + SSE endpoints, agentic loop, hybrid search, dream phase, entity extraction                                                                                                               |
+| **Database**       | ApsaraDB RDS (PostgreSQL) + pgvector HNSW index | Persistent storage across 5 memory tiers, cosine similarity vector search                                                                                                                       |
+| **AI Engine**      | 7 Qwen models via DashScope                     | qwen3-asr-flash (ASR), qwen3.5-omni-flash (vision), text-embedding-v4 (embeddings), qwen-flash (scoring), qwen-plus-latest (entity extraction), qwen-turbo (reranker), qwen-max (summarization) |
+| **Deployment**     | Docker + nginx + GitHub Actions                 | Multi-stage Docker build → Docker Hub → SSH deploy to ECS. Frontend at `/`, API at `/api/*`, docs at `/api/docs`                                                                                |
+| **Infrastructure** | Alibaba Cloud                                   | ECS, ApsaraDB RDS, OSS, Function Compute, EventBridge, API Gateway                                                                                                                              |
 
 ## Local Development
 
@@ -67,14 +117,6 @@ DB_NAME=atunbi_memory
 DB_USER=atunbi
 DB_PASSWORD=atunbi_secret
 ```
-
-Start the server:
-
-```bash
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-The API docs are at `http://127.0.0.1:8000/api/docs`.
 
 ## MCP Server (Model Context Protocol)
 

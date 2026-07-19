@@ -8,7 +8,8 @@ import re
 import time
 import uuid
 from sqlmodel.ext.asyncio.session import AsyncSession
-from models import WorkingMemory, EntityMemory
+from sqlmodel import select as sql_select
+from models import WorkingMemory, EntityMemory, User
 from repositories import memory_repo, config_repo, entity_repo
 from services.qwen_service import (
     get_embedding, score_message, generate_stream, get_client,
@@ -234,9 +235,7 @@ async def process_chat_stream(
                             clean = candidate.split()[0]
                             if not clean.lower().endswith('ing'):
                                 speaker_name = clean
-                                from models import User as UserModel
-                                from sqlmodel import select as sql_select
-                                uresult = await db.execute(sql_select(UserModel).where(UserModel.id == user_id))
+                                uresult = await db.execute(sql_select(User).where(User.id == user_id))
                                 u = uresult.scalars().first()
                                 if u and u.display_name != speaker_name:
                                     u.display_name = speaker_name
@@ -244,9 +243,7 @@ async def process_chat_stream(
                                     logger.info(f"[Identity] Stored display_name='{speaker_name}' for user {user_id}")
 
                 if not speaker_name:
-                    from models import User as UserModel
-                    from sqlmodel import select as sql_select
-                    uresult = await db.execute(sql_select(UserModel).where(UserModel.id == user_id))
+                    uresult = await db.execute(sql_select(User).where(User.id == user_id))
                     u = uresult.scalars().first()
                     if u and u.display_name and u.display_name not in ('not sure', 'planning to', 'automatic'):
                         speaker_name = u.display_name
@@ -460,8 +457,6 @@ async def process_chat_stream(
                     snippets.append(item[:80] + ('...' if len(item) > 80 else ''))
                 step["snippets"] = snippets[:3]
 
-    from models import User
-    from sqlmodel import select as sql_select
     result = await db.execute(sql_select(User).where(User.id == user_id))
     user = result.scalars().first()
     # Skip identity injection when context is file content — the user is asking about a file, not themselves
@@ -508,9 +503,6 @@ async def process_chat_stream(
             if not re.search(r'\b(he|she|they|who does .* refer to)\b', n, re.IGNORECASE)
         ]
         if substantive_notes:
-            from services.qwen_service import get_client as qwen_get_client
-            client = qwen_get_client()
-            
             notes_text = "\n".join(substantive_notes[:3])
             clarification_prompt = f"""The user's message triggered these fact checks:
 

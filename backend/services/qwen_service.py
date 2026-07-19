@@ -4,6 +4,7 @@ from dashscope import MultiModalConversation
 import asyncio
 import base64
 import dashscope
+import fitz  # pymupdf
 import json
 import os
 import re
@@ -408,9 +409,8 @@ Now respond based on the context and user message."""
 
 
 def _render_pdf_pages(file_bytes: bytes, max_pages: int = 5) -> list[bytes]:
-    """Render PDF pages as PNG images using pymupdf. Returns list of PNG byte strings."""
+    """Render PDF pages as PNG images. Returns list of PNG byte strings."""
     try:
-        import fitz  # pymupdf — lazy import avoids startup dependency
         doc = fitz.open(stream=file_bytes, filetype="pdf")
         pages = []
         for i, page in enumerate(doc):
@@ -423,6 +423,22 @@ def _render_pdf_pages(file_bytes: bytes, max_pages: int = 5) -> list[bytes]:
     except Exception as e:
         logger.warning(f"[PDF] Render failed: {e}")
         return []
+
+
+def _extract_pdf_text(file_bytes: bytes) -> str:
+    """Extract raw text from all pages of a PDF."""
+    try:
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
+        pages = []
+        for page in doc:
+            text = page.get_text("text")
+            if text.strip():
+                pages.append(text.strip())
+        doc.close()
+        return "\n\n--- Page Break ---\n\n".join(pages)
+    except Exception as e:
+        logger.warning(f"[PDF] Text extraction failed: {e}")
+        return ""
 
 
 async def _extract_video_frames(file_bytes: bytes, max_frames: int = 5) -> list[bytes]:

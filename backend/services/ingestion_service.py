@@ -16,7 +16,7 @@ from typing import Optional
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from repositories import memory_repo, entity_repo
-from services.qwen_service import get_embedding, score_message, get_client, OMNI_MODEL, _caption_audio
+from services.qwen_service import get_embedding, score_message, get_client, OMNI_MODEL, _caption_audio, _render_pdf_pages, _extract_pdf_text
 from services.extraction import extract_entities
 from services.storage_service import upload_file, build_oss_key
 from models import WorkingMemory, EntityMemory, FileAttachment
@@ -37,7 +37,9 @@ async def ingest_text(
         conversation_id = str(uuid.uuid4())
 
     if whole:
-        para = text.strip()[:500]
+        # Store as one memory — the caller has already determined this
+        # should not be chunked (documents, transcripts).
+        para = text.strip()
         if len(para) < 10:
             return {"status": "ingested", "source": source_label, "segments": 0, "conversation_id": conversation_id}
         embedding = await get_embedding(para)
@@ -76,7 +78,7 @@ async def ingest_text(
                 current = sent
         if current:
             chunks.append(current)
-        paragraphs = chunks if chunks else [text.strip()[:500]]
+        paragraphs = chunks if chunks else [text.strip()[:4000]]  # fallback
 
     overlap_chars = 50
     if len(paragraphs) > 1:
@@ -91,20 +93,20 @@ async def ingest_text(
 
     injected = 0
     truncated_count = 0
+    max_chunk = 4000 if source_label == "document" else 500
     for para in paragraphs:
         if len(para) < 10:
             continue
 
-        # Warn on truncation — 500 chars is a lot for a single fact
-        if len(para) > 500:
+        if len(para) > max_chunk:
             truncated_count += 1
 
-        embedding = await get_embedding(para[:500])
-        importance, emotion = await score_message(para[:500])
+        embedding = await get_embedding(para[:max_chunk])
+        importance, emotion = await score_message(para[:max_chunk])
 
         memory = WorkingMemory(
             user_id=user_id,
-            message=f"[{source_label}]: {para[:500]}",
+            message=f"[{source_label}]: {para[:max_chunk]}",
             role=role,
             conversation_id=conversation_id,
             embedding=embedding,
@@ -170,9 +172,50 @@ async def _analyze_media(file_content: bytes, filename: str, mime_type: str) -> 
                 content_to_send = frame_data
                 mime_to_send = frame_mime
         
+        # Extract text from PDFs directly — avoids vision model hallucination on
+        # numbers. Falls back to page rendering for image-only PDFs.
+        if mime_type == 'application/pdf':
+            pdf_text = _extract_pdf_text(file_content)
+            
+            if pdf_text and len(pdf_text.strip()) > 100:
+                response = await client.chat.completions.create(
+                    model="qwen-plus-latest",
+                    messages=[{
+                        "role": "user",
+                        "content": (
+                            "Extract ALL lab values, numbers, dates, and findings from this report. "
+                            "Return them as a structured summary. Be exact — do not change any numbers. "
+                            "Include: test name, result value, reference range, units, and any flags (HIGH/LOW).\n\n"
+                            f"{pdf_text}"
+                        ),
+                    }],
+                    max_tokens=1500,
+                )
+                return response.choices[0].message.content
+            
+            # Image-only PDF fallback
+            pages = _render_pdf_pages(file_content)
+            if pages:
+                page_images = [
+                    {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{base64.b64encode(p).decode()}"}}
+                    for p in pages
+                ]
+                response = await client.chat.completions.create(
+                    model=OMNI_MODEL,
+                    messages=[{
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "Read this document carefully. Extract all data values, numbers, dates, lab results, and key findings. Be thorough and exact — do not change any numbers."},
+                            *page_images,
+                        ]
+                    }],
+                    max_tokens=1000,
+                )
+                return response.choices[0].message.content
+            return None
+        
         data_url = f"data:{mime_to_send};base64,{base64.b64encode(content_to_send).decode()}"
         
-        # Use correct content type for the model
         if mime_to_send.startswith('audio/'):
             media_block = {"type": "audio_url", "audio_url": {"url": data_url}}
         elif mime_to_send.startswith('video/'):

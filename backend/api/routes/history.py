@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select, func, delete
 from api.dependencies import get_db, get_current_user
-from models import User, WorkingMemory, EntityMemory
+from models import User, WorkingMemory, EntityMemory, FileAttachment
 
 router = APIRouter(tags=["History"])
 
@@ -119,7 +119,6 @@ async def delete_conversation(
     )
     await db.execute(stmt)
 
-    from models import FileAttachment
     from services.storage_service import _get_bucket as _oss_bucket
     fa_stmt = select(FileAttachment).where(
         FileAttachment.user_id == current_user.id,

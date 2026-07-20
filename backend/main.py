@@ -1,10 +1,18 @@
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
 import logging
 from database import init_db
 from api.routes import auth, history, chat, dream, config, stats, ingestion, tools
 from mcp_server.sse_server import router as mcp_router
+from utils.errors import (
+    http_exception_handler,
+    validation_exception_handler,
+    app_exception_handler,
+    general_exception_handler,
+    AppException,
+)
 
 # Structured logging — INFO visible in terminal, DEBUG hidden
 logging.basicConfig(level=logging.INFO, format="%(name)s: %(message)s")
@@ -18,6 +26,12 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(title="Atunbi", docs_url="/api/docs", openapi_url="/api/openapi.json", lifespan=lifespan)
+
+# Register exception handlers
+app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(AppException, app_exception_handler)
+app.add_exception_handler(Exception, general_exception_handler)
 
 app.add_middleware(
     CORSMiddleware,

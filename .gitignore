@@ -20,10 +20,9 @@ Thumbs.db
 
 notes
 docs
-TESTS
 blog
 demo
 
 # Build artifacts
 *.bak
-infra/dream-trigger/*.zipdemo/blood-work.html
+infra/dream-trigger/*.zip

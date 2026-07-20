@@ -32,14 +32,14 @@ class SystemConfig(SQLModel, table=True):
     # Ceiling: no memory survives past this
     max_working_life_h: float = Field(default=168.0)
     
-    # --- Dream phase ---
+    # Dream phase
     # Conversations younger than this never get archived
     min_convo_age_to_archive_h: float = Field(default=0.5)
     
     # Only prune memories below this importance AND with access_count < 2
     prune_max_importance: float = Field(default=0.3)
     
-    # --- Retrieval ---
+    # Retrieval
     min_recent: int = Field(default=3)
     max_recent: int = Field(default=20)
     max_important: int = Field(default=20)
@@ -47,14 +47,14 @@ class SystemConfig(SQLModel, table=True):
     # Agentic loop: max tool-calling iterations per query
     max_agent_steps: int = Field(default=5)
     
-    # --- Recency ---
+    # Recency
     # RRF weight halves every N days
     recency_half_life_days: float = Field(default=7.0)
     
-    # --- Temperature ---
+    # Temperature
     temp_default: float = Field(default=0.7)
     
-    # --- Salience gate ---
+    # Salience gate
     # Messages scoring below this importance are discarded
     save_threshold: float = Field(default=0.1)
 
@@ -69,10 +69,8 @@ class WorkingMemory(SQLModel, table=True):
     emotional_valence: float = Field(default=0.0)
     access_count: int = Field(default=0)
     timestamp: datetime.datetime = Field(default_factory=lambda: datetime.datetime.now(datetime.UTC).replace(tzinfo=None))
-    # Provenance: traceable source of this memory
     source_turn_id: Optional[str] = Field(default=None, index=True)
-    confidence: float = Field(default=1.0)  # 0-1, lowered on contradiction
-    # Outcome tagging: when was this memory last cited in a response?
+    confidence: float = Field(default=1.0)
     last_used_at: Optional[datetime.datetime] = Field(default=None)
 
 class EpisodicMemory(SQLModel, table=True):

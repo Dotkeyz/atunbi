@@ -1,29 +1,32 @@
-# Python
-venv/
+```gitignore
+# Dependencies
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+*.py~
+
+# Test and coverage
+.coverage
+coverage/
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# Environment
 .env
+.env.local
+.env.*
 
-# Node/Next.js 
-node_modules/
-.next/
-out/
+# Logs
+*.log
 
-# Function Compute deployment package
-infra/dream-trigger/main.py.zip
+# Temporary files
+*.tmp
+*.swp
+*.swo
 
-# IDE & OS
-.vscode/
-.idea/
+# OS generated files
 .DS_Store
 Thumbs.db
-
-notes
-docs
-TESTS
-blog
-demo
-
-# Build artifacts
-*.bak
-infra/dream-trigger/*.zipdemo/blood-work.html
+```

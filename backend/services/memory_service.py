@@ -130,8 +130,6 @@ async def process_chat_stream(
 
     await handle_forget_the_forget(db, user_id, message)
 
-    # Early init — entity extraction below may add notes before the
-    # greeting/agentic branch initializes context_text properly.
     context_text: list[str] = []
 
     # Embedding + scoring
